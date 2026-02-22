@@ -1,0 +1,362 @@
+basePath: /
+definitions:
+  handlers.createUserReq:
+    properties:
+      age:
+        type: integer
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+  handlers.deleteResponse:
+    properties:
+      rows_affected:
+        example: 1
+        type: integer
+    type: object
+  handlers.errorResponse:
+    properties:
+      error:
+        example: invalid input
+        type: string
+    type: object
+  handlers.healthResponse:
+    properties:
+      status:
+        example: ok
+        type: string
+    type: object
+  handlers.idResponse:
+    properties:
+      id:
+        example: 1
+        type: integer
+    type: object
+  handlers.loginReq:
+    properties:
+      password:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  handlers.statusResponse:
+    properties:
+      status:
+        example: updated
+        type: string
+    type: object
+  handlers.tokenResponse:
+    properties:
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    type: object
+  handlers.updateUserReq:
+    properties:
+      age:
+        type: integer
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+  modules.User:
+    properties:
+      age:
+        type: integer
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Simple CRUD Users API with JWT + API KEY
+  title: Users API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates user and returns JWT token
+      parameters:
+      - description: Login payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.loginReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.tokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Login
+      tags:
+      - auth
+  /healthz:
+    get:
+      description: Returns API health status
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.healthResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Healthcheck
+      tags:
+      - health
+  /users/:
+    get:
+      description: Returns non-deleted users with pagination
+      parameters:
+      - description: Page size
+        in: query
+        maximum: 200
+        minimum: 1
+        name: limit
+        type: integer
+      - description: Rows offset
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/modules.User'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      - BearerAuth: []
+      summary: List users
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Create user payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.createUserReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.idResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      - BearerAuth: []
+      summary: Create user
+      tags:
+      - users
+  /users/{id}:
+    delete:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.deleteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      - BearerAuth: []
+      summary: Soft delete user
+      tags:
+      - users
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/modules.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      - BearerAuth: []
+      summary: Get user by ID
+      tags:
+      - users
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update user payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.updateUserReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.statusResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      - BearerAuth: []
+      summary: Update user
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update user payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.updateUserReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.statusResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      - BearerAuth: []
+      summary: Update user
+      tags:
+      - users
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: X-API-KEY
+    type: apiKey
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
