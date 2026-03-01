@@ -33,6 +33,7 @@ func main() {
 	cfg := app.LoadConfig()
 
 	ctx := context.Background()
+	log.Printf("Waiting for database at %s:%s...", cfg.DB.Host, cfg.DB.Port)
 	db := postgres.NewDialect(ctx, &cfg.DB)
 	defer db.DB.Close()
 
@@ -52,7 +53,7 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("server started on :%s", cfg.Port)
+		log.Printf("Starting the Server on :%s", cfg.Port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatal(err)
 		}
@@ -62,7 +63,7 @@ func main() {
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	<-stop
 
-	log.Println("shutting down")
+	log.Println("Shutting down gracefully...")
 	ctxShutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 

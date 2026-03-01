@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -23,16 +24,34 @@ func NewDialect(ctx context.Context, cfg *modules.PostgreConfig) *Dialect {
 		cfg.Host, cfg.Port, cfg.Username, cfg.Password, cfg.DBName, cfg.SSLMode,
 	)
 
-	db, err := sqlx.ConnectContext(ctx, "postgres", dsn)
+	var (
+		db  *sqlx.DB
+		err error
+	)
+
+	for attempt := 1; attempt <= 10; attempt++ {
+		db, err = sqlx.ConnectContext(ctx, "postgres", dsn)
+		if err == nil {
+			break
+		}
+
+		log.Printf("database is not ready yet (attempt %d/10): %v", attempt, err)
+		if attempt < 10 {
+			time.Sleep(2 * time.Second)
+		}
+	}
+
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("connect database: %w", err))
 	}
 
 	if err := db.PingContext(ctx); err != nil {
 		panic(err)
 	}
+	log.Println("Database connection established")
 
 	autoMigrate(cfg)
+	log.Println("Database migrations completed")
 
 	return &Dialect{DB: db}
 }
